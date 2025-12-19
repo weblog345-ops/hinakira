@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>アイコン生成</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    canvas { border: 1px solid #ccc; margin: 10px; }
+    a { display: block; margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>Clipboard Manager アイコン生成</h1>
+  <p>以下のリンクをクリックしてアイコンをダウンロードし、iconsフォルダに保存してください</p>
+
+  <canvas id="c16" width="16" height="16"></canvas>
+  <canvas id="c48" width="48" height="48"></canvas>
+  <canvas id="c128" width="128" height="128"></canvas>
+
+  <div id="links"></div>
+
+  <script>
+    function drawIcon(ctx, size) {
+      const s = size / 128;
+
+      // 背景クリップボード
+      ctx.fillStyle = '#4a90d9';
+      roundRect(ctx, 24*s, 16*s, 80*s, 100*s, 8*s);
+
+      // 白い紙
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, 32*s, 24*s, 64*s, 84*s, 4*s);
+
+      // クリップ部分
+      ctx.fillStyle = '#3a7bc8';
+      roundRect(ctx, 44*s, 8*s, 40*s, 16*s, 4*s);
+
+      // テキスト行
+      ctx.fillStyle = '#d0d0d0';
+      roundRect(ctx, 40*s, 44*s, 48*s, 6*s, 2*s);
+      roundRect(ctx, 40*s, 58*s, 40*s, 6*s, 2*s);
+      roundRect(ctx, 40*s, 72*s, 44*s, 6*s, 2*s);
+      roundRect(ctx, 40*s, 86*s, 36*s, 6*s, 2*s);
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    const sizes = [16, 48, 128];
+    const links = document.getElementById('links');
+
+    sizes.forEach(size => {
+      const canvas = document.getElementById('c' + size);
+      const ctx = canvas.getContext('2d');
+      drawIcon(ctx, size);
+
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `icon${size}.png`;
+      link.textContent = `icon${size}.png をダウンロード`;
+      links.appendChild(link);
+    });
+  </script>
+</body>
+</html>

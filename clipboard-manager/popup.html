@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clipboard Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Clipboard</h1>
+      <button id="addBtn" class="icon-btn" title="新規追加">+</button>
+    </header>
+
+    <!-- フォルダタブ -->
+    <div class="folder-tabs">
+      <button class="folder-tab active" data-folder="all">すべて</button>
+    </div>
+
+    <!-- フォルダ管理 -->
+    <div class="folder-actions">
+      <button id="addFolderBtn" class="small-btn">+ フォルダ</button>
+    </div>
+
+    <!-- クリップアイテム一覧 -->
+    <div class="clips-list" id="clipsList">
+      <!-- アイテムがここに動的に追加される -->
+    </div>
+
+    <!-- 新規追加モーダル -->
+    <div id="addModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>新規クリップ</h3>
+        <textarea id="clipText" placeholder="テキストを入力..."></textarea>
+        <select id="clipFolder">
+          <option value="default">未分類</option>
+        </select>
+        <div class="modal-actions">
+          <button id="cancelAdd" class="btn-secondary">キャンセル</button>
+          <button id="saveClip" class="btn-primary">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- フォルダ追加モーダル -->
+    <div id="folderModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>新規フォルダ</h3>
+        <input type="text" id="folderName" placeholder="フォルダ名">
+        <div class="modal-actions">
+          <button id="cancelFolder" class="btn-secondary">キャンセル</button>
+          <button id="saveFolder" class="btn-primary">作成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

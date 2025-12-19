@@ -4,6 +4,7 @@ let folders = [{ id: 'default', name: '未分類' }];
 let currentFolder = 'all';
 let folderToDelete = null;
 let clipToMove = null;
+let clipToEdit = null;
 
 // DOM要素
 const clipsList = document.getElementById('clipsList');
@@ -14,10 +15,14 @@ const addModal = document.getElementById('addModal');
 const folderModal = document.getElementById('folderModal');
 const deleteFolderModal = document.getElementById('deleteFolderModal');
 const moveModal = document.getElementById('moveModal');
+const editModal = document.getElementById('editModal');
+const clipTitle = document.getElementById('clipTitle');
 const clipText = document.getElementById('clipText');
 const clipFolder = document.getElementById('clipFolder');
 const folderName = document.getElementById('folderName');
 const moveToFolder = document.getElementById('moveToFolder');
+const editClipTitle = document.getElementById('editClipTitle');
+const editClipText = document.getElementById('editClipText');
 
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
@@ -54,7 +59,6 @@ function renderFolderTabs() {
   // タブクリックイベント
   folderTabs.querySelectorAll('.folder-tab').forEach(tab => {
     tab.addEventListener('click', (e) => {
-      // 削除ボタンがクリックされた場合は無視
       if (e.target.classList.contains('folder-delete')) return;
       currentFolder = tab.dataset.folder;
       renderFolderTabs();
@@ -85,7 +89,6 @@ function showDeleteFolderModal(folderId) {
 
 // フォルダ削除実行
 async function deleteFolder(folderId) {
-  // フォルダ内のクリップを「未分類」に移動
   clips = clips.map(c => {
     if (c.folderId === folderId) {
       return { ...c, folderId: 'default' };
@@ -93,10 +96,8 @@ async function deleteFolder(folderId) {
     return c;
   });
 
-  // フォルダを削除
   folders = folders.filter(f => f.id !== folderId);
 
-  // 現在表示中のフォルダが削除された場合は「すべて」に戻す
   if (currentFolder === folderId) {
     currentFolder = 'all';
   }
@@ -144,10 +145,12 @@ function renderClips() {
     return `
       <div class="clip-item" data-id="${clip.id}">
         <div class="clip-content">
+          ${clip.title ? `<div class="clip-title">${escapeHtml(clip.title)}</div>` : ''}
           <div class="clip-text">${escapeHtml(clip.text)}</div>
           ${currentFolder === 'all' && folder ? `<div class="folder-badge">${escapeHtml(folder.name)}</div>` : ''}
         </div>
         <div class="clip-actions">
+          <button class="clip-btn edit" title="編集">✎</button>
           <button class="clip-btn move" title="移動">↗</button>
           <button class="clip-btn copy" title="コピー">📋</button>
           <button class="clip-btn delete" title="削除">×</button>
@@ -165,6 +168,12 @@ function renderClips() {
       if (!e.target.classList.contains('clip-btn')) {
         copyClip(id);
       }
+    });
+
+    // 編集ボタン
+    item.querySelector('.edit').addEventListener('click', (e) => {
+      e.stopPropagation();
+      showEditModal(id);
     });
 
     // 移動ボタン
@@ -185,6 +194,32 @@ function renderClips() {
       deleteClip(id);
     });
   });
+}
+
+// 編集モーダル表示
+function showEditModal(clipId) {
+  const clip = clips.find(c => c.id === clipId);
+  if (!clip) return;
+
+  clipToEdit = clipId;
+  editClipTitle.value = clip.title || '';
+  editClipText.value = clip.text;
+  editModal.classList.remove('hidden');
+  editClipTitle.focus();
+}
+
+// クリップを編集
+async function updateClip(clipId, title, text) {
+  clips = clips.map(c => {
+    if (c.id === clipId) {
+      return { ...c, title: title.trim() || '', text: text.trim() };
+    }
+    return c;
+  });
+
+  await saveData();
+  renderClips();
+  showToast('保存しました');
 }
 
 // 移動モーダル表示
@@ -211,7 +246,7 @@ async function moveClip(clipId, newFolderId) {
   showToast('移動しました');
 }
 
-// クリップをコピー
+// クリップをコピー（タイトル以外をコピー）
 async function copyClip(id) {
   const clip = clips.find(c => c.id === id);
   if (clip) {
@@ -228,9 +263,10 @@ async function deleteClip(id) {
 }
 
 // 新規クリップ追加
-async function addClip(text, folderId) {
+async function addClip(title, text, folderId) {
   const clip = {
     id: Date.now().toString(),
+    title: title.trim() || '',
     text: text.trim(),
     folderId,
     createdAt: new Date().toISOString()
@@ -275,7 +311,7 @@ function escapeHtml(text) {
 // モーダル制御
 addBtn.addEventListener('click', () => {
   addModal.classList.remove('hidden');
-  clipText.focus();
+  clipTitle.focus();
 });
 
 addFolderBtn.addEventListener('click', () => {
@@ -285,6 +321,7 @@ addFolderBtn.addEventListener('click', () => {
 
 document.getElementById('cancelAdd').addEventListener('click', () => {
   addModal.classList.add('hidden');
+  clipTitle.value = '';
   clipText.value = '';
 });
 
@@ -319,11 +356,26 @@ document.getElementById('confirmMove').addEventListener('click', async () => {
   }
 });
 
+document.getElementById('cancelEdit').addEventListener('click', () => {
+  editModal.classList.add('hidden');
+  clipToEdit = null;
+});
+
+document.getElementById('saveEdit').addEventListener('click', async () => {
+  const text = editClipText.value.trim();
+  if (clipToEdit && text) {
+    await updateClip(clipToEdit, editClipTitle.value, text);
+    editModal.classList.add('hidden');
+    clipToEdit = null;
+  }
+});
+
 document.getElementById('saveClip').addEventListener('click', async () => {
   const text = clipText.value.trim();
   if (text) {
-    await addClip(text, clipFolder.value);
+    await addClip(clipTitle.value, text, clipFolder.value);
     addModal.classList.add('hidden');
+    clipTitle.value = '';
     clipText.value = '';
   }
 });
@@ -344,6 +396,12 @@ clipText.addEventListener('keydown', (e) => {
   }
 });
 
+editClipText.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.ctrlKey) {
+    document.getElementById('saveEdit').click();
+  }
+});
+
 folderName.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     document.getElementById('saveFolder').click();
@@ -354,6 +412,7 @@ folderName.addEventListener('keydown', (e) => {
 addModal.addEventListener('click', (e) => {
   if (e.target === addModal) {
     addModal.classList.add('hidden');
+    clipTitle.value = '';
     clipText.value = '';
   }
 });
@@ -376,5 +435,12 @@ moveModal.addEventListener('click', (e) => {
   if (e.target === moveModal) {
     moveModal.classList.add('hidden');
     clipToMove = null;
+  }
+});
+
+editModal.addEventListener('click', (e) => {
+  if (e.target === editModal) {
+    editModal.classList.add('hidden');
+    clipToEdit = null;
   }
 });

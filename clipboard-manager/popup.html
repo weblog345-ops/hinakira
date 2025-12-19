@@ -32,6 +32,7 @@
     <div id="addModal" class="modal hidden">
       <div class="modal-content">
         <h3>新規クリップ</h3>
+        <input type="text" id="clipTitle" placeholder="タイトル（省略可）">
         <textarea id="clipText" placeholder="テキストを入力..."></textarea>
         <select id="clipFolder">
           <option value="default">未分類</option>
@@ -39,6 +40,19 @@
         <div class="modal-actions">
           <button id="cancelAdd" class="btn-secondary">キャンセル</button>
           <button id="saveClip" class="btn-primary">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- クリップ編集モーダル -->
+    <div id="editModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>クリップを編集</h3>
+        <input type="text" id="editClipTitle" placeholder="タイトル（省略可）">
+        <textarea id="editClipText" placeholder="テキストを入力..."></textarea>
+        <div class="modal-actions">
+          <button id="cancelEdit" class="btn-secondary">キャンセル</button>
+          <button id="saveEdit" class="btn-primary">保存</button>
         </div>
       </div>
     </div>

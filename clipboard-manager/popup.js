@@ -2,6 +2,8 @@
 let clips = [];
 let folders = [{ id: 'default', name: '未分類' }];
 let currentFolder = 'all';
+let folderToDelete = null;
+let clipToMove = null;
 
 // DOM要素
 const clipsList = document.getElementById('clipsList');
@@ -10,9 +12,12 @@ const addBtn = document.getElementById('addBtn');
 const addFolderBtn = document.getElementById('addFolderBtn');
 const addModal = document.getElementById('addModal');
 const folderModal = document.getElementById('folderModal');
+const deleteFolderModal = document.getElementById('deleteFolderModal');
+const moveModal = document.getElementById('moveModal');
 const clipText = document.getElementById('clipText');
 const clipFolder = document.getElementById('clipFolder');
 const folderName = document.getElementById('folderName');
+const moveToFolder = document.getElementById('moveToFolder');
 
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
@@ -41,18 +46,66 @@ function renderFolderTabs() {
     ${folders.map(f => `
       <button class="folder-tab ${currentFolder === f.id ? 'active' : ''}" data-folder="${f.id}">
         ${escapeHtml(f.name)}
+        ${f.id !== 'default' ? `<span class="folder-delete" data-delete="${f.id}">×</span>` : ''}
       </button>
     `).join('')}
   `;
 
   // タブクリックイベント
   folderTabs.querySelectorAll('.folder-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
+    tab.addEventListener('click', (e) => {
+      // 削除ボタンがクリックされた場合は無視
+      if (e.target.classList.contains('folder-delete')) return;
       currentFolder = tab.dataset.folder;
       renderFolderTabs();
       renderClips();
     });
   });
+
+  // フォルダ削除ボタン
+  folderTabs.querySelectorAll('.folder-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const folderId = btn.dataset.delete;
+      showDeleteFolderModal(folderId);
+    });
+  });
+}
+
+// フォルダ削除確認モーダル表示
+function showDeleteFolderModal(folderId) {
+  const folder = folders.find(f => f.id === folderId);
+  const clipsInFolder = clips.filter(c => c.folderId === folderId).length;
+
+  folderToDelete = folderId;
+  document.getElementById('deleteFolderMsg').textContent =
+    `「${folder.name}」を削除しますか？${clipsInFolder > 0 ? `\n(${clipsInFolder}件のクリップは「未分類」に移動します)` : ''}`;
+  deleteFolderModal.classList.remove('hidden');
+}
+
+// フォルダ削除実行
+async function deleteFolder(folderId) {
+  // フォルダ内のクリップを「未分類」に移動
+  clips = clips.map(c => {
+    if (c.folderId === folderId) {
+      return { ...c, folderId: 'default' };
+    }
+    return c;
+  });
+
+  // フォルダを削除
+  folders = folders.filter(f => f.id !== folderId);
+
+  // 現在表示中のフォルダが削除された場合は「すべて」に戻す
+  if (currentFolder === folderId) {
+    currentFolder = 'all';
+  }
+
+  await saveData();
+  renderFolderTabs();
+  renderFolderSelect();
+  renderClips();
+  showToast('フォルダを削除しました');
 }
 
 // フォルダ選択ボックス描画
@@ -60,6 +113,14 @@ function renderFolderSelect() {
   clipFolder.innerHTML = folders.map(f =>
     `<option value="${f.id}">${escapeHtml(f.name)}</option>`
   ).join('');
+}
+
+// 移動先フォルダ選択ボックス描画
+function renderMoveToFolderSelect(currentFolderId) {
+  moveToFolder.innerHTML = folders
+    .filter(f => f.id !== currentFolderId)
+    .map(f => `<option value="${f.id}">${escapeHtml(f.name)}</option>`)
+    .join('');
 }
 
 // クリップ一覧描画
@@ -87,6 +148,7 @@ function renderClips() {
           ${currentFolder === 'all' && folder ? `<div class="folder-badge">${escapeHtml(folder.name)}</div>` : ''}
         </div>
         <div class="clip-actions">
+          <button class="clip-btn move" title="移動">↗</button>
           <button class="clip-btn copy" title="コピー">📋</button>
           <button class="clip-btn delete" title="削除">×</button>
         </div>
@@ -105,12 +167,48 @@ function renderClips() {
       }
     });
 
+    // 移動ボタン
+    item.querySelector('.move').addEventListener('click', (e) => {
+      e.stopPropagation();
+      showMoveModal(id);
+    });
+
     // コピーボタン
-    item.querySelector('.copy').addEventListener('click', () => copyClip(id));
+    item.querySelector('.copy').addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyClip(id);
+    });
 
     // 削除ボタン
-    item.querySelector('.delete').addEventListener('click', () => deleteClip(id));
+    item.querySelector('.delete').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteClip(id);
+    });
   });
+}
+
+// 移動モーダル表示
+function showMoveModal(clipId) {
+  const clip = clips.find(c => c.id === clipId);
+  if (!clip) return;
+
+  clipToMove = clipId;
+  renderMoveToFolderSelect(clip.folderId);
+  moveModal.classList.remove('hidden');
+}
+
+// クリップを移動
+async function moveClip(clipId, newFolderId) {
+  clips = clips.map(c => {
+    if (c.id === clipId) {
+      return { ...c, folderId: newFolderId };
+    }
+    return c;
+  });
+
+  await saveData();
+  renderClips();
+  showToast('移動しました');
 }
 
 // クリップをコピー
@@ -195,6 +293,32 @@ document.getElementById('cancelFolder').addEventListener('click', () => {
   folderName.value = '';
 });
 
+document.getElementById('cancelDeleteFolder').addEventListener('click', () => {
+  deleteFolderModal.classList.add('hidden');
+  folderToDelete = null;
+});
+
+document.getElementById('confirmDeleteFolder').addEventListener('click', async () => {
+  if (folderToDelete) {
+    await deleteFolder(folderToDelete);
+    deleteFolderModal.classList.add('hidden');
+    folderToDelete = null;
+  }
+});
+
+document.getElementById('cancelMove').addEventListener('click', () => {
+  moveModal.classList.add('hidden');
+  clipToMove = null;
+});
+
+document.getElementById('confirmMove').addEventListener('click', async () => {
+  if (clipToMove && moveToFolder.value) {
+    await moveClip(clipToMove, moveToFolder.value);
+    moveModal.classList.add('hidden');
+    clipToMove = null;
+  }
+});
+
 document.getElementById('saveClip').addEventListener('click', async () => {
   const text = clipText.value.trim();
   if (text) {
@@ -238,5 +362,19 @@ folderModal.addEventListener('click', (e) => {
   if (e.target === folderModal) {
     folderModal.classList.add('hidden');
     folderName.value = '';
+  }
+});
+
+deleteFolderModal.addEventListener('click', (e) => {
+  if (e.target === deleteFolderModal) {
+    deleteFolderModal.classList.add('hidden');
+    folderToDelete = null;
+  }
+});
+
+moveModal.addEventListener('click', (e) => {
+  if (e.target === moveModal) {
+    moveModal.classList.add('hidden');
+    clipToMove = null;
   }
 });

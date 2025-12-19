@@ -54,6 +54,30 @@
         </div>
       </div>
     </div>
+
+    <!-- フォルダ削除確認モーダル -->
+    <div id="deleteFolderModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>フォルダを削除</h3>
+        <p id="deleteFolderMsg" class="modal-msg"></p>
+        <div class="modal-actions">
+          <button id="cancelDeleteFolder" class="btn-secondary">キャンセル</button>
+          <button id="confirmDeleteFolder" class="btn-danger">削除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- クリップ移動モーダル -->
+    <div id="moveModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>フォルダに移動</h3>
+        <select id="moveToFolder"></select>
+        <div class="modal-actions">
+          <button id="cancelMove" class="btn-secondary">キャンセル</button>
+          <button id="confirmMove" class="btn-primary">移動</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="popup.js"></script>

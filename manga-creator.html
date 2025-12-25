@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NanoComic Canvas - 漫画作成ツール</title>
+    <link rel="stylesheet" href="manga-creator.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <button id="closeSettingsBtn" class="modal-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+                <h2 class="modal-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    API設定
+                </h2>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Gemini API Key</label>
+                        <input type="password" id="apiKeyInput" class="form-input" placeholder="AIzaSy...">
+                        <div class="form-hint">
+                            <p>※ キーはブラウザ内(localStorage)にのみ保存されます。</p>
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
+                                Google AI StudioでAPIキーを取得する ↗
+                            </a>
+                        </div>
+                    </div>
+                    <button id="saveApiKeyBtn" class="btn btn-primary btn-block">設定を保存して閉じる</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                </div>
+                <h1 class="header-title">Nano<span class="text-blue">Comic</span> Canvas <span class="header-subtitle">Smart Layout</span></h1>
+            </div>
+            <div class="header-right">
+                <button id="settingsBtn" class="btn-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+                <div class="header-divider"></div>
+                <button id="copyAllBtn" class="btn btn-secondary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10,9 9,9 8,9"></polyline>
+                    </svg>
+                    全ページコピー
+                </button>
+            </div>
+        </header>
+
+        <div class="main-wrapper">
+            <!-- Sidebar (Pages) -->
+            <aside class="pages-sidebar">
+                <button id="addPageBtn" class="btn btn-primary btn-block">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span class="hide-mobile">ページ</span>
+                </button>
+                <div id="pagesList" class="pages-list">
+                    <!-- Pages will be rendered here -->
+                </div>
+            </aside>
+
+            <!-- Main Workspace -->
+            <main class="main-content">
+                <!-- Left: Detail Editor -->
+                <div class="editor-panel">
+                    <!-- Layout Templates & Style -->
+                    <div class="editor-section">
+                        <h3 class="section-title">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="13.5" cy="6.5" r="0.5"></circle>
+                                <circle cx="17.5" cy="10.5" r="0.5"></circle>
+                                <circle cx="8.5" cy="7.5" r="0.5"></circle>
+                                <circle cx="6.5" cy="12.5" r="0.5"></circle>
+                                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"></path>
+                            </svg>
+                            スタイル & レイアウト
+                        </h3>
+                        <div class="style-grid">
+                            <select id="styleSelect" class="form-select">
+                                <option value="webtoon">Webtoon (縦スクロール)</option>
+                                <option value="comic_book" selected>カラーコミック (縦長ページ)</option>
+                                <option value="anime_color">アニメ塗り (高品質)</option>
+                                <option value="modern_manga">日本の漫画 (モノクロ)</option>
+                            </select>
+                            <select id="colorThemeSelect" class="form-select">
+                                <option value="vibrant" selected>昼・明るい (Vibrant)</option>
+                                <option value="sunset">夕方・ドラマチック</option>
+                                <option value="night">夜・シネマティック</option>
+                                <option value="gloomy">曇り・シリアス</option>
+                                <option value="horror">ホラー・不気味</option>
+                            </select>
+                        </div>
+
+                        <!-- AI Layout Import Button -->
+                        <div class="layout-import">
+                            <label id="layoutImportLabel" class="btn btn-dashed btn-block">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <span id="layoutImportText">画像からレイアウト読込</span>
+                                <input type="file" id="layoutImportInput" accept="image/*" hidden>
+                            </label>
+                            <p id="layoutError" class="error-text hidden"></p>
+                            <p id="layoutSuccess" class="success-text hidden"></p>
+                            <p class="hint-text">※下書き画像などを読み込むとAIがコマ割りを再現します</p>
+                        </div>
+
+                        <div class="templates-section">
+                            <span class="templates-label">レイアウトテンプレート (適用するとリセットされます)</span>
+                            <div id="templateGrid" class="template-grid">
+                                <!-- Templates will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scene Editor -->
+                    <div class="scene-editor" id="sceneEditor">
+                        <div id="noSceneSelected" class="no-scene-message">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
+                                <path d="m13 13 6 6"></path>
+                            </svg>
+                            プレビュー画面のコマをクリックして<br>編集を開始してください
+                        </div>
+                        <div id="sceneEditorContent" class="scene-editor-content hidden">
+                            <div class="scene-header">
+                                <span id="sceneTitle" class="scene-badge">コマ #1 詳細</span>
+                                <button id="deleteSceneBtn" class="btn-icon btn-danger">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3,6 5,6 21,6"></polyline>
+                                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Margin Controls -->
+                            <div class="margin-controls">
+                                <div class="margin-header">
+                                    <span>コマ余白・位置調整 (Padding)</span>
+                                    <span class="margin-badge">※間隔を広げます</span>
+                                </div>
+                                <div class="margin-grid">
+                                    <div class="margin-item">
+                                        <label>
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                            上 (Top)
+                                        </label>
+                                        <input type="range" id="paddingTop" min="0" max="40" value="0">
+                                    </div>
+                                    <div class="margin-item">
+                                        <label>
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                                            下 (Bottom)
+                                        </label>
+                                        <input type="range" id="paddingBottom" min="0" max="40" value="0">
+                                    </div>
+                                    <div class="margin-item">
+                                        <label>
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                                            左 (Left)
+                                        </label>
+                                        <input type="range" id="paddingLeft" min="0" max="40" value="0">
+                                    </div>
+                                    <div class="margin-item">
+                                        <label>
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                            右 (Right)
+                                        </label>
+                                        <input type="range" id="paddingRight" min="0" max="40" value="0">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="scene-fields">
+                                <div class="form-group">
+                                    <label class="form-label-small">構図タイプ</label>
+                                    <select id="panelTypeSelect" class="form-select">
+                                        <option value="medium_shot">バストアップ</option>
+                                        <option value="close_up">顔アップ</option>
+                                        <option value="wide_shot">風景・遠景</option>
+                                        <option value="full_body">全身</option>
+                                        <option value="dutch_angle">斜め構図</option>
+                                        <option value="from_above">俯瞰(上から)</option>
+                                        <option value="from_below">アオリ(下から)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label-small">背景</label>
+                                    <input type="text" id="backgroundInput" class="form-input-small" placeholder="例: 教室, 夕焼けの街">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label-small">擬音 (SFX)</label>
+                                    <input type="text" id="sfxInput" class="form-input-small" placeholder="例: ドン！">
+                                </div>
+
+                                <div class="characters-section">
+                                    <div class="characters-header">
+                                        <label class="form-label-small">キャラクター</label>
+                                        <button id="addCharacterBtn" class="btn-text">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            追加
+                                        </button>
+                                    </div>
+                                    <div id="charactersList" class="characters-list">
+                                        <!-- Characters will be rendered here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prompt Preview -->
+                    <div class="prompt-section">
+                        <div class="prompt-header">
+                            <span class="prompt-label">PROMPT</span>
+                            <button id="generatePromptBtn" class="btn btn-ai">
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8L19 13M17.8 6.2L19 5M3 21l9-9M12.2 6.2L11 5"></path>
+                                </svg>
+                                AI生成
+                            </button>
+                        </div>
+                        <textarea id="promptTextarea" class="prompt-textarea" readonly></textarea>
+                        <p id="promptError" class="error-text hidden"></p>
+                    </div>
+                </div>
+
+                <!-- Right: Interactive Canvas -->
+                <div class="canvas-container" id="canvasContainer">
+                    <div id="canvasWrapper" class="canvas-wrapper" dir="rtl">
+                        <!-- Canvas Background Grid -->
+                        <div class="canvas-grid"></div>
+
+                        <!-- Loading Overlay -->
+                        <div id="loadingOverlay" class="loading-overlay hidden">
+                            <div class="loading-spinner"></div>
+                            <p class="loading-title">レイアウト解析中...</p>
+                            <p class="loading-subtitle">画像を読み取り、コマ割りを再現しています</p>
+                        </div>
+
+                        <!-- Panels Grid -->
+                        <div id="panelsGrid" class="panels-grid">
+                            <!-- Panels will be rendered here -->
+                        </div>
+
+                        <!-- Add Scene Button -->
+                        <div class="add-scene-wrapper">
+                            <button id="addSceneBtn" class="btn btn-add-scene">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                コマ追加
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="manga-creator.js"></script>
+</body>
+</html>

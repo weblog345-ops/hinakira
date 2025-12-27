@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自律型MVジェネレーター - Hinakira</title>
+    <link rel="stylesheet" href="mv-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 自律型MVジェネレーター</h1>
+            <p class="subtitle">音楽をアップロードするだけで、AIがビジュアルを自動生成</p>
+        </header>
+
+        <div class="main-content">
+            <aside class="control-panel">
+                <section class="panel-section">
+                    <h2>🎵 音楽</h2>
+                    <input type="file" id="audioFile" accept="audio/*">
+                    <div class="audio-controls">
+                        <button id="playBtn" disabled>▶ 再生</button>
+                        <button id="stopBtn" disabled>⏹ 停止</button>
+                    </div>
+                    <div class="audio-info" id="audioInfo"></div>
+                </section>
+
+                <section class="panel-section">
+                    <h2>🎨 ビジュアルスタイル</h2>
+                    <label>
+                        スタイル:
+                        <select id="visualStyle">
+                            <option value="particles">パーティクル</option>
+                            <option value="wave">波形</option>
+                            <option value="bars">バー</option>
+                            <option value="circular">サーキュラー</option>
+                            <option value="galaxy">ギャラクシー</option>
+                        </select>
+                    </label>
+                    <label>
+                        カラーテーマ:
+                        <select id="colorTheme">
+                            <option value="neon">ネオン</option>
+                            <option value="sunset">サンセット</option>
+                            <option value="ocean">オーシャン</option>
+                            <option value="fire">ファイア</option>
+                            <option value="monochrome">モノクロ</option>
+                        </select>
+                    </label>
+                    <label>
+                        反応感度:
+                        <input type="range" id="sensitivity" min="1" max="10" value="5">
+                    </label>
+                    <label>
+                        パーティクル数:
+                        <input type="range" id="particleCount" min="50" max="500" value="200">
+                    </label>
+                </section>
+
+                <section class="panel-section">
+                    <h2>📝 テキスト/歌詞</h2>
+                    <label>
+                        タイトル:
+                        <input type="text" id="titleText" placeholder="曲名を入力...">
+                    </label>
+                    <label>
+                        アーティスト:
+                        <input type="text" id="artistText" placeholder="アーティスト名...">
+                    </label>
+                    <label>
+                        <input type="checkbox" id="showTitle" checked>
+                        タイトルを表示
+                    </label>
+                    <label>
+                        テキストアニメーション:
+                        <select id="textAnimation">
+                            <option value="pulse">パルス</option>
+                            <option value="wave">ウェーブ</option>
+                            <option value="glow">グロー</option>
+                            <option value="bounce">バウンス</option>
+                        </select>
+                    </label>
+                </section>
+
+                <section class="panel-section">
+                    <h2>🎬 エクスポート</h2>
+                    <label>
+                        解像度:
+                        <select id="resolution">
+                            <option value="720">720p (1280x720)</option>
+                            <option value="1080" selected>1080p (1920x1080)</option>
+                        </select>
+                    </label>
+                    <label>
+                        フレームレート:
+                        <select id="framerate">
+                            <option value="30">30 FPS</option>
+                            <option value="60">60 FPS</option>
+                        </select>
+                    </label>
+                    <button id="recordBtn" disabled>🔴 録画開始</button>
+                    <button id="downloadBtn" disabled>💾 ダウンロード</button>
+                    <div class="recording-status" id="recordingStatus"></div>
+                </section>
+
+                <section class="panel-section">
+                    <h2>⚙️ 詳細設定</h2>
+                    <label>
+                        背景色:
+                        <input type="color" id="bgColor" value="#0a0a0a">
+                    </label>
+                    <label>
+                        <input type="checkbox" id="mirrorMode">
+                        ミラーモード
+                    </label>
+                    <label>
+                        <input type="checkbox" id="trailEffect" checked>
+                        トレイルエフェクト
+                    </label>
+                    <label>
+                        ブラー強度:
+                        <input type="range" id="blurAmount" min="0" max="20" value="5">
+                    </label>
+                </section>
+            </aside>
+
+            <main class="canvas-area">
+                <canvas id="mvCanvas"></canvas>
+                <div class="canvas-overlay" id="canvasOverlay">
+                    <p>🎵 音楽ファイルをドロップまたは選択してください</p>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <a href="index.html">← ロゴツールに戻る</a>
+            <span>Hinakira MV Generator</span>
+        </footer>
+    </div>
+
+    <script src="mv-script.js"></script>
+</body>
+</html>

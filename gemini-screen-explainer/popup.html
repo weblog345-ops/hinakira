@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Screen Explainer</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✨ Gemini Screen Explainer</h1>
+        </header>
+
+        <!-- API Key設定 -->
+        <div id="apiKeySection" class="section">
+            <label for="apiKey">Gemini API キー:</label>
+            <div class="api-key-input">
+                <input type="password" id="apiKey" placeholder="APIキーを入力...">
+                <button id="saveApiKey" class="btn btn-small">保存</button>
+            </div>
+            <p class="hint">
+                <a href="https://aistudio.google.com/app/apikey" target="_blank">
+                    APIキーを取得 →
+                </a>
+            </p>
+        </div>
+
+        <!-- スクリーンショット -->
+        <div id="screenshotSection" class="section">
+            <button id="captureBtn" class="btn btn-primary btn-large">
+                📸 画面をキャプチャ
+            </button>
+            <div id="screenshotPreview" class="preview hidden">
+                <img id="previewImage" alt="Screenshot preview">
+            </div>
+        </div>
+
+        <!-- ローディング -->
+        <div id="loadingSection" class="section hidden">
+            <div class="loader"></div>
+            <p>Geminiが画面を解析中...</p>
+        </div>
+
+        <!-- チャット -->
+        <div id="chatSection" class="section hidden">
+            <div id="chatMessages" class="chat-messages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="質問を入力...">
+                <button id="sendBtn" class="btn btn-primary">送信</button>
+            </div>
+        </div>
+
+        <!-- リセット -->
+        <div id="resetSection" class="section hidden">
+            <button id="resetBtn" class="btn btn-secondary">
+                🔄 新しいスクリーンショット
+            </button>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

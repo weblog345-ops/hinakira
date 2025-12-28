@@ -6,16 +6,30 @@ class GeminiScreenExplainer {
         this.model = 'gemini-2.0-flash';
         this.screenshotData = null;
         this.chatHistory = [];
+        this.isProcessing = false;
 
         this.init();
     }
 
     async init() {
+        console.log('[SidePanel] Initializing...');
         await this.loadSettings();
         this.setupEventListeners();
+        this.setupStorageListener();
 
-        // 少し待ってからペンディングスクリーンショットをチェック
-        setTimeout(() => this.checkPendingScreenshot(), 100);
+        // 起動時にペンディングスクリーンショットをチェック
+        await this.checkPendingScreenshot();
+    }
+
+    setupStorageListener() {
+        // ストレージの変更を監視
+        chrome.storage.onChanged.addListener((changes, area) => {
+            console.log('[SidePanel] Storage changed:', area, Object.keys(changes));
+            if (area === 'local' && changes.pendingScreenshot && changes.pendingScreenshot.newValue) {
+                console.log('[SidePanel] New screenshot detected in storage');
+                this.checkPendingScreenshot();
+            }
+        });
     }
 
     async loadSettings() {
@@ -24,6 +38,7 @@ class GeminiScreenExplainer {
         if (result.geminiApiKey) {
             this.apiKey = result.geminiApiKey;
             document.getElementById('apiKey').value = '••••••••••••••••';
+            console.log('[SidePanel] API key loaded');
         }
 
         if (result.geminiModel) {
@@ -33,51 +48,58 @@ class GeminiScreenExplainer {
     }
 
     async checkPendingScreenshot() {
-        console.log('Checking for pending screenshot...');
+        if (this.isProcessing) {
+            console.log('[SidePanel] Already processing, skipping');
+            return;
+        }
 
-        // バックグラウンドからスクリーンショットを取得
-        try {
-            const response = await chrome.runtime.sendMessage({ action: 'getPendingScreenshot' });
-            console.log('getPendingScreenshot response:', response);
+        console.log('[SidePanel] Checking for pending screenshot...');
 
-            if (response && response.success && response.screenshot) {
-                this.screenshotData = response.screenshot;
+        const result = await chrome.storage.local.get(['pendingScreenshot', 'captureTimestamp', 'autoAnalyze']);
+        console.log('[SidePanel] Storage result:', {
+            hasScreenshot: !!result.pendingScreenshot,
+            timestamp: result.captureTimestamp,
+            autoAnalyze: result.autoAnalyze
+        });
+
+        if (result.pendingScreenshot && result.captureTimestamp) {
+            const age = Date.now() - result.captureTimestamp;
+            console.log('[SidePanel] Screenshot age:', age, 'ms');
+
+            if (age < 30000) { // 30秒以内
+                this.isProcessing = true;
+                this.screenshotData = result.pendingScreenshot;
+
+                // ストレージから削除
+                await chrome.storage.local.remove(['pendingScreenshot', 'captureTimestamp', 'autoAnalyze']);
 
                 // プレビュー表示
                 document.getElementById('previewImage').src = this.screenshotData;
                 document.getElementById('screenshotPreview').classList.remove('hidden');
+                console.log('[SidePanel] Screenshot preview displayed');
 
-                // APIキーがあれば自動解析開始
-                if (this.apiKey && response.autoAnalyze) {
-                    console.log('Auto-analyzing screenshot...');
+                // APIキーがあれば自動解析
+                if (this.apiKey && result.autoAnalyze) {
+                    console.log('[SidePanel] Starting auto-analysis...');
                     await this.analyzeScreenshot();
                 } else if (!this.apiKey) {
                     document.getElementById('settingsDetails').open = true;
-                    this.showError('APIキーを設定してから「画面をキャプチャ」を押してください');
+                    this.showError('APIキーを設定してください');
                 }
+
+                this.isProcessing = false;
             }
-        } catch (error) {
-            console.error('Error checking pending screenshot:', error);
         }
     }
 
     setupEventListeners() {
-        // APIキー保存
         document.getElementById('saveApiKey').addEventListener('click', () => this.saveApiKey());
-
-        // モデル選択
         document.getElementById('modelSelect').addEventListener('change', (e) => this.saveModel(e.target.value));
-
-        // スクリーンショット
         document.getElementById('captureBtn').addEventListener('click', () => this.captureScreen());
-
-        // チャット送信
         document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
         document.getElementById('chatInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.sendMessage();
         });
-
-        // リセット
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
     }
 
@@ -91,7 +113,6 @@ class GeminiScreenExplainer {
             apiKeyInput.value = '••••••••••••••••';
             this.showTemporaryMessage('保存完了');
 
-            // スクリーンショットがあれば解析開始
             if (this.screenshotData && this.chatHistory.length === 0) {
                 await this.analyzeScreenshot();
             }
@@ -110,36 +131,35 @@ class GeminiScreenExplainer {
             return;
         }
 
-        console.log('Capturing screen via background...');
+        console.log('[SidePanel] Manual capture requested');
 
         try {
-            // バックグラウンドにスクリーンショットをリクエスト
             const response = await chrome.runtime.sendMessage({ action: 'captureScreenshot' });
-            console.log('captureScreenshot response:', response);
+            console.log('[SidePanel] Capture response:', response);
 
             if (response && response.success && response.screenshot) {
                 this.screenshotData = response.screenshot;
-
-                // プレビュー表示
                 document.getElementById('previewImage').src = this.screenshotData;
                 document.getElementById('screenshotPreview').classList.remove('hidden');
-
-                // Geminiで解析
                 await this.analyzeScreenshot();
             } else {
-                this.showError('スクリーンショットの取得に失敗: ' + (response?.error || '不明なエラー'));
+                this.showError('スクリーンショット失敗: ' + (response?.error || '不明なエラー'));
             }
         } catch (error) {
-            console.error('Capture error:', error);
-            this.showError('スクリーンショットの取得に失敗: ' + error.message);
+            console.error('[SidePanel] Capture error:', error);
+            this.showError('スクリーンショット失敗: ' + error.message);
         }
     }
 
     async analyzeScreenshot() {
+        if (!this.screenshotData) {
+            this.showError('スクリーンショットがありません');
+            return;
+        }
+
         this.showLoading(true);
 
         try {
-            // Base64データを抽出
             const base64Data = this.screenshotData.replace(/^data:image\/\w+;base64,/, '');
 
             const response = await this.callGeminiAPI([
@@ -159,17 +179,11 @@ class GeminiScreenExplainer {
                 }
             ]);
 
-            // チャット履歴に追加
             this.chatHistory = [
                 {
                     role: 'user',
                     parts: [
-                        {
-                            inlineData: {
-                                mimeType: 'image/png',
-                                data: base64Data
-                            }
-                        },
+                        { inlineData: { mimeType: 'image/png', data: base64Data } },
                         { text: '画面を説明してください' }
                     ]
                 },
@@ -179,30 +193,25 @@ class GeminiScreenExplainer {
                 }
             ];
 
-            // 結果を表示
             this.showLoading(false);
             this.showChatSection();
             this.addMessage('assistant', response);
-
-            // 設定を閉じる
             document.getElementById('settingsDetails').open = false;
 
         } catch (error) {
             this.showLoading(false);
-            this.showError('画像の解析に失敗: ' + error.message);
+            this.showError('解析失敗: ' + error.message);
         }
     }
 
     async sendMessage() {
         const input = document.getElementById('chatInput');
         const message = input.value.trim();
-
         if (!message) return;
 
         input.value = '';
         this.addMessage('user', message);
 
-        // チャット履歴に追加
         this.chatHistory.push({
             role: 'user',
             parts: [{ text: message }]
@@ -210,14 +219,11 @@ class GeminiScreenExplainer {
 
         try {
             const response = await this.callGeminiAPI(this.chatHistory);
-
             this.chatHistory.push({
                 role: 'model',
                 parts: [{ text: response }]
             });
-
             this.addMessage('assistant', response);
-
         } catch (error) {
             this.addMessage('assistant', 'エラー: ' + error.message);
         }
@@ -228,15 +234,10 @@ class GeminiScreenExplainer {
 
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: contents,
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 4096,
-                }
+                generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
             })
         });
 
@@ -250,24 +251,15 @@ class GeminiScreenExplainer {
     }
 
     addMessage(role, text) {
-        const messagesContainer = document.getElementById('chatMessages');
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${role}`;
-
-        const labelDiv = document.createElement('div');
-        labelDiv.className = 'message-label';
-        labelDiv.textContent = role === 'assistant' ? '🤖 Gemini' : '👤 あなた';
-
-        const textDiv = document.createElement('div');
-        textDiv.className = 'message-text';
-        textDiv.textContent = text;
-
-        messageDiv.appendChild(labelDiv);
-        messageDiv.appendChild(textDiv);
-        messagesContainer.appendChild(messageDiv);
-
-        // スクロール
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        const container = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = `message ${role}`;
+        div.innerHTML = `
+            <div class="message-label">${role === 'assistant' ? '🤖 Gemini' : '👤 あなた'}</div>
+            <div class="message-text">${text}</div>
+        `;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
     }
 
     showLoading(show) {
@@ -281,31 +273,26 @@ class GeminiScreenExplainer {
     }
 
     showError(message) {
-        const existingError = document.querySelector('.error');
-        if (existingError) existingError.remove();
+        const existing = document.querySelector('.error');
+        if (existing) existing.remove();
 
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error';
-        errorDiv.textContent = message;
-        document.querySelector('.container').insertBefore(
-            errorDiv,
-            document.getElementById('screenshotSection')
-        );
-
-        setTimeout(() => errorDiv.remove(), 5000);
+        const div = document.createElement('div');
+        div.className = 'error';
+        div.textContent = message;
+        document.querySelector('.container').insertBefore(div, document.getElementById('screenshotSection'));
+        setTimeout(() => div.remove(), 5000);
     }
 
     showTemporaryMessage(message) {
         const btn = document.getElementById('saveApiKey');
-        const originalText = btn.textContent;
+        const original = btn.textContent;
         btn.textContent = '✓ ' + message;
-        setTimeout(() => btn.textContent = originalText, 1500);
+        setTimeout(() => btn.textContent = original, 1500);
     }
 
     reset() {
         this.screenshotData = null;
         this.chatHistory = [];
-
         document.getElementById('screenshotPreview').classList.add('hidden');
         document.getElementById('chatSection').classList.add('hidden');
         document.getElementById('resetSection').classList.add('hidden');
@@ -314,8 +301,7 @@ class GeminiScreenExplainer {
     }
 }
 
-// 初期化
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Side panel loaded');
-    new GeminiScreenExplainer();
+    console.log('[SidePanel] DOM loaded');
+    window.app = new GeminiScreenExplainer();
 });

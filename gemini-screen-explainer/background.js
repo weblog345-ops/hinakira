@@ -1,63 +1,54 @@
 // Gemini Screen Explainer - Background Service Worker
 
-// アイコンクリック時にサイドパネルを開く
-chrome.action.onClicked.addListener(async (tab) => {
-    await captureAndOpenPanel(tab);
-});
+console.log('[Background] Service worker started');
 
-// ショートカットキーのハンドリング
-chrome.commands.onCommand.addListener(async (command) => {
-    console.log('Command received:', command);
-    if (command === 'capture-and-explain') {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab) {
-            await captureAndOpenPanel(tab);
-        }
-    }
+// アイコンクリック または ショートカットキー(_execute_action) で発火
+chrome.action.onClicked.addListener(async (tab) => {
+    console.log('[Background] Action clicked or shortcut pressed, tab:', tab.id, tab.url);
+    await captureAndOpenPanel(tab);
 });
 
 // スクリーンショットを撮ってサイドパネルを開く
 async function captureAndOpenPanel(tab) {
-    console.log('captureAndOpenPanel called, tab:', tab.id, tab.url);
+    console.log('[Background] captureAndOpenPanel called');
 
     let screenshot = null;
 
-    // スクリーンショットを撮る（chrome:// ページなどでは失敗する）
+    // スクリーンショットを撮る
     try {
         screenshot = await chrome.tabs.captureVisibleTab(tab.windowId, {
             format: 'png',
             quality: 100
         });
-        console.log('Screenshot captured successfully');
+        console.log('[Background] Screenshot captured, length:', screenshot.length);
     } catch (error) {
-        console.error('Screenshot failed:', error.message);
+        console.error('[Background] Screenshot failed:', error.message);
     }
 
-    // スクリーンショットをストレージに保存（サイドパネル用）
+    // スクリーンショットをストレージに保存
     if (screenshot) {
         await chrome.storage.local.set({
             pendingScreenshot: screenshot,
             captureTimestamp: Date.now(),
-            autoAnalyze: true  // 自動解析フラグ
+            autoAnalyze: true
         });
-        console.log('Screenshot saved to storage');
+        console.log('[Background] Screenshot saved to storage');
     }
 
     // サイドパネルを開く
     try {
         await chrome.sidePanel.open({ tabId: tab.id });
-        console.log('Side panel opened');
+        console.log('[Background] Side panel opened');
     } catch (error) {
-        console.error('Failed to open side panel:', error);
+        console.error('[Background] Failed to open side panel:', error);
     }
 }
 
 // サイドパネルからのメッセージを受信
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('Message received:', message);
+    console.log('[Background] Message received:', message.action);
 
     if (message.action === 'captureScreenshot') {
-        // サイドパネルからのキャプチャリクエスト
         chrome.tabs.query({ active: true, currentWindow: true }).then(async ([tab]) => {
             if (tab) {
                 try {
@@ -73,39 +64,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: false, error: 'No active tab' });
             }
         });
-        return true; // 非同期レスポンスを示す
-    }
-
-    if (message.action === 'getPendingScreenshot') {
-        // 保存されたスクリーンショットを取得
-        chrome.storage.local.get(['pendingScreenshot', 'captureTimestamp', 'autoAnalyze']).then((result) => {
-            if (result.pendingScreenshot && result.captureTimestamp) {
-                const age = Date.now() - result.captureTimestamp;
-                if (age < 30000) { // 30秒以内
-                    // 取得後に削除
-                    chrome.storage.local.remove(['pendingScreenshot', 'captureTimestamp', 'autoAnalyze']);
-                    sendResponse({
-                        success: true,
-                        screenshot: result.pendingScreenshot,
-                        autoAnalyze: result.autoAnalyze
-                    });
-                } else {
-                    chrome.storage.local.remove(['pendingScreenshot', 'captureTimestamp', 'autoAnalyze']);
-                    sendResponse({ success: false, error: 'Screenshot expired' });
-                }
-            } else {
-                sendResponse({ success: false, error: 'No pending screenshot' });
-            }
-        });
         return true;
     }
 });
 
 // 拡張機能インストール時の初期化
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('Extension installed/updated');
+    console.log('[Background] Extension installed/updated');
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
-        .catch(err => console.error('Failed to set panel behavior:', err));
+        .catch(err => console.error('[Background] setPanelBehavior error:', err));
 });
-
-console.log('Background service worker started');

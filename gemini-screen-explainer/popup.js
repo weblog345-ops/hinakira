@@ -3,6 +3,7 @@
 class GeminiScreenExplainer {
     constructor() {
         this.apiKey = '';
+        this.model = 'gemini-2.5-flash-preview-05-20';
         this.screenshotData = null;
         this.chatHistory = [];
 
@@ -10,21 +11,54 @@ class GeminiScreenExplainer {
     }
 
     async init() {
-        await this.loadApiKey();
+        await this.loadSettings();
         this.setupEventListeners();
+        await this.displayShortcut();
     }
 
-    async loadApiKey() {
-        const result = await chrome.storage.local.get(['geminiApiKey']);
+    async loadSettings() {
+        const result = await chrome.storage.local.get(['geminiApiKey', 'geminiModel']);
+
         if (result.geminiApiKey) {
             this.apiKey = result.geminiApiKey;
             document.getElementById('apiKey').value = '••••••••••••••••';
+        }
+
+        if (result.geminiModel) {
+            this.model = result.geminiModel;
+            document.getElementById('modelSelect').value = this.model;
+        }
+    }
+
+    async displayShortcut() {
+        try {
+            const commands = await chrome.commands.getAll();
+            const actionCommand = commands.find(cmd => cmd.name === '_execute_action');
+
+            if (actionCommand && actionCommand.shortcut) {
+                document.getElementById('currentShortcut').textContent =
+                    `現在のショートカット: ${actionCommand.shortcut}`;
+            } else {
+                document.getElementById('currentShortcut').textContent =
+                    'ショートカット未設定';
+            }
+        } catch (e) {
+            console.log('Could not get shortcuts:', e);
         }
     }
 
     setupEventListeners() {
         // APIキー保存
         document.getElementById('saveApiKey').addEventListener('click', () => this.saveApiKey());
+
+        // モデル選択
+        document.getElementById('modelSelect').addEventListener('change', (e) => this.saveModel(e.target.value));
+
+        // ショートカット設定リンク
+        document.getElementById('shortcutLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+        });
 
         // スクリーンショット
         document.getElementById('captureBtn').addEventListener('click', () => this.captureScreen());
@@ -49,6 +83,11 @@ class GeminiScreenExplainer {
             apiKeyInput.value = '••••••••••••••••';
             this.showTemporaryMessage('APIキーを保存しました！');
         }
+    }
+
+    async saveModel(model) {
+        this.model = model;
+        await chrome.storage.local.set({ geminiModel: model });
     }
 
     async captureScreen() {
@@ -166,7 +205,7 @@ class GeminiScreenExplainer {
     }
 
     async callGeminiAPI(contents) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${this.apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
 
         const response = await fetch(url, {
             method: 'POST',
@@ -177,7 +216,7 @@ class GeminiScreenExplainer {
                 contents: contents,
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 2048,
+                    maxOutputTokens: 4096,
                 }
             })
         });

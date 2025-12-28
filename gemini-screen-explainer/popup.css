@@ -46,6 +46,69 @@ header h1 {
     color: #aaa;
 }
 
+/* Settings */
+.settings-row {
+    margin-bottom: 12px;
+}
+
+.settings-row label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.settings-row select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.settings-row select:focus {
+    outline: none;
+    border-color: #4285f4;
+}
+
+.settings-row select option {
+    background: #1a1a2e;
+    color: #fff;
+}
+
+.hint-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+
+.hint-row a {
+    color: #4285f4;
+    text-decoration: none;
+}
+
+.hint-row a:hover {
+    text-decoration: underline;
+}
+
+.hint-row .separator {
+    color: #444;
+}
+
+.current-shortcut {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(66, 133, 244, 0.15);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #8ab4f8;
+    text-align: center;
+}
+
 .api-key-input {
     display: flex;
     gap: 8px;

@@ -10,6 +10,7 @@
     "tabs"
   ],
   "host_permissions": [
+    "<all_urls>",
     "https://generativelanguage.googleapis.com/*"
   ],
   "background": {

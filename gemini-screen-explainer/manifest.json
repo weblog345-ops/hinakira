@@ -1,17 +1,24 @@
 {
   "manifest_version": 3,
   "name": "Gemini Screen Explainer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "スクリーンショットをGeminiが解説し、チャットで質問できるChrome拡張機能",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "sidePanel",
+    "tabs"
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -25,7 +32,7 @@
     "128": "icons/icon128.png"
   },
   "commands": {
-    "_execute_action": {
+    "capture-and-explain": {
       "suggested_key": {
         "default": "Ctrl+Shift+G",
         "mac": "Command+Shift+G"

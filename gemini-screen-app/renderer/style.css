@@ -1,0 +1,341 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    overflow: hidden;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* タイトルバー */
+.titlebar {
+    -webkit-app-region: drag;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 36px;
+    padding: 0 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.titlebar-title {
+    font-size: 0.85rem;
+    background: linear-gradient(90deg, #4285f4, #9b59b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.titlebar-buttons {
+    -webkit-app-region: no-drag;
+    display: flex;
+    gap: 4px;
+}
+
+.titlebar-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.titlebar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.titlebar-btn.close:hover {
+    background: #e74c3c;
+    color: #fff;
+}
+
+/* コンテナ */
+.container {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+/* 設定 */
+.settings-details {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.settings-details summary {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.settings-details summary:hover {
+    color: #fff;
+}
+
+.settings-details[open] summary {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-content {
+    padding: 12px;
+}
+
+.settings-row {
+    margin-bottom: 12px;
+}
+
+.settings-row label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.input-group {
+    display: flex;
+    gap: 6px;
+}
+
+.input-group input {
+    flex: 1;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 0.85rem;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #4285f4;
+}
+
+select option {
+    background: #1a1a2e;
+}
+
+.hint {
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.hint a {
+    color: #4285f4;
+    text-decoration: none;
+}
+
+.hint a:hover {
+    text-decoration: underline;
+}
+
+/* セクション */
+.section {
+    margin-bottom: 16px;
+}
+
+/* ボタン */
+.btn {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4285f4, #9b59b6);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-small {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+}
+
+.btn-large {
+    width: 100%;
+    padding: 14px 16px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ショートカットヒント */
+.shortcut-hint {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.shortcut-hint span {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* プレビュー */
+.preview {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preview img {
+    width: 100%;
+    display: block;
+}
+
+/* ローディング */
+.loader {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #4285f4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#loadingSection {
+    text-align: center;
+    padding: 20px;
+}
+
+#loadingSection p {
+    color: #aaa;
+    font-size: 0.85rem;
+}
+
+/* チャット */
+.chat-messages {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.assistant {
+    background: rgba(66, 133, 244, 0.2);
+    border: 1px solid rgba(66, 133, 244, 0.3);
+}
+
+.message.user {
+    background: rgba(155, 89, 182, 0.2);
+    border: 1px solid rgba(155, 89, 182, 0.3);
+    text-align: right;
+}
+
+.message-label {
+    font-size: 0.7rem;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.message-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.chat-input-area {
+    display: flex;
+    gap: 6px;
+}
+
+.chat-input-area input {
+    flex: 1;
+}
+
+/* ユーティリティ */
+.hidden {
+    display: none !important;
+}
+
+/* スクロールバー */
+::-webkit-scrollbar {
+    width: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+/* エラー */
+.error {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+}

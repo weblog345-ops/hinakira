@@ -3,7 +3,7 @@
 class GeminiScreenExplainer {
     constructor() {
         this.apiKey = '';
-        this.model = 'gemini-2.5-flash-preview-05-20';
+        this.model = 'gemini-2.0-flash';
         this.screenshotData = null;
         this.chatHistory = [];
 

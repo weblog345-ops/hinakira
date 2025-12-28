@@ -13,7 +13,9 @@ class GeminiScreenExplainer {
     async init() {
         await this.loadSettings();
         this.setupEventListeners();
-        await this.checkPendingScreenshot();
+
+        // 少し待ってからペンディングスクリーンショットをチェック
+        setTimeout(() => this.checkPendingScreenshot(), 100);
     }
 
     async loadSettings() {
@@ -31,34 +33,31 @@ class GeminiScreenExplainer {
     }
 
     async checkPendingScreenshot() {
-        // バックグラウンドから送られたスクリーンショットをチェック
-        const result = await chrome.storage.local.get(['pendingScreenshot', 'captureTimestamp']);
+        console.log('Checking for pending screenshot...');
 
-        if (result.pendingScreenshot && result.captureTimestamp) {
-            // 10秒以内のスクリーンショットのみ処理
-            const age = Date.now() - result.captureTimestamp;
-            if (age < 10000) {
-                this.screenshotData = result.pendingScreenshot;
+        // バックグラウンドからスクリーンショットを取得
+        try {
+            const response = await chrome.runtime.sendMessage({ action: 'getPendingScreenshot' });
+            console.log('getPendingScreenshot response:', response);
+
+            if (response && response.success && response.screenshot) {
+                this.screenshotData = response.screenshot;
 
                 // プレビュー表示
                 document.getElementById('previewImage').src = this.screenshotData;
                 document.getElementById('screenshotPreview').classList.remove('hidden');
 
-                // 保存されたスクリーンショットをクリア
-                await chrome.storage.local.remove(['pendingScreenshot', 'captureTimestamp']);
-
                 // APIキーがあれば自動解析開始
-                if (this.apiKey) {
+                if (this.apiKey && response.autoAnalyze) {
+                    console.log('Auto-analyzing screenshot...');
                     await this.analyzeScreenshot();
-                } else {
-                    // APIキー未設定の場合は設定を開く
+                } else if (!this.apiKey) {
                     document.getElementById('settingsDetails').open = true;
-                    this.showError('APIキーを設定してください');
+                    this.showError('APIキーを設定してから「画面をキャプチャ」を押してください');
                 }
-            } else {
-                // 古いスクリーンショットは削除
-                await chrome.storage.local.remove(['pendingScreenshot', 'captureTimestamp']);
             }
+        } catch (error) {
+            console.error('Error checking pending screenshot:', error);
         }
     }
 
@@ -80,13 +79,6 @@ class GeminiScreenExplainer {
 
         // リセット
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
-
-        // ストレージの変更を監視（新しいスクリーンショットがあれば処理）
-        chrome.storage.onChanged.addListener((changes, area) => {
-            if (area === 'local' && changes.pendingScreenshot) {
-                this.checkPendingScreenshot();
-            }
-        });
     }
 
     async saveApiKey() {
@@ -118,25 +110,28 @@ class GeminiScreenExplainer {
             return;
         }
 
+        console.log('Capturing screen via background...');
+
         try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            // バックグラウンドにスクリーンショットをリクエスト
+            const response = await chrome.runtime.sendMessage({ action: 'captureScreenshot' });
+            console.log('captureScreenshot response:', response);
 
-            const screenshot = await chrome.tabs.captureVisibleTab(null, {
-                format: 'png',
-                quality: 100
-            });
+            if (response && response.success && response.screenshot) {
+                this.screenshotData = response.screenshot;
 
-            this.screenshotData = screenshot;
+                // プレビュー表示
+                document.getElementById('previewImage').src = this.screenshotData;
+                document.getElementById('screenshotPreview').classList.remove('hidden');
 
-            // プレビュー表示
-            document.getElementById('previewImage').src = screenshot;
-            document.getElementById('screenshotPreview').classList.remove('hidden');
-
-            // Geminiで解析
-            await this.analyzeScreenshot();
-
+                // Geminiで解析
+                await this.analyzeScreenshot();
+            } else {
+                this.showError('スクリーンショットの取得に失敗: ' + (response?.error || '不明なエラー'));
+            }
         } catch (error) {
-            this.showError('スクリーンショットの取得に失敗しました: ' + error.message);
+            console.error('Capture error:', error);
+            this.showError('スクリーンショットの取得に失敗: ' + error.message);
         }
     }
 
@@ -194,7 +189,7 @@ class GeminiScreenExplainer {
 
         } catch (error) {
             this.showLoading(false);
-            this.showError('画像の解析に失敗しました: ' + error.message);
+            this.showError('画像の解析に失敗: ' + error.message);
         }
     }
 
@@ -286,7 +281,6 @@ class GeminiScreenExplainer {
     }
 
     showError(message) {
-        // 既存のエラーを削除
         const existingError = document.querySelector('.error');
         if (existingError) existingError.remove();
 
@@ -322,5 +316,6 @@ class GeminiScreenExplainer {
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Side panel loaded');
     new GeminiScreenExplainer();
 });

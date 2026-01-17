@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ユーザーモデル
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String    // bcryptでハッシュ化されたパスワード
+  name          String
+  role          Role      @default(MEMBER)
+  emailVerified Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // リレーション: 送信したメッセージ
+  sentMessages     Message[] @relation("MessageSender")
+  // リレーション: 受信したメッセージ
+  receivedMessages Message[] @relation("MessageReceiver")
+
+  @@map("users")
+}
+
+// ロール（権限）の列挙型
+enum Role {
+  ADMIN   // 管理者 - 全員とメッセージ可能
+  MEMBER  // 一般会員 - 管理者とのみメッセージ可能
+}
+
+// メッセージモデル
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String   // メッセージ内容
+  senderId   Int      // 送信者ID
+  receiverId Int      // 受信者ID
+  isRead     Boolean  @default(false) // 既読フラグ
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // リレーション
+  sender   User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  // インデックス: パフォーマンス向上のため
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
+  @@index([createdAt])
+  @@map("messages")
+}

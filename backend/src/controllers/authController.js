@@ -93,19 +93,30 @@ export const login = catchAsync(async (req, res) => {
   // JWTトークンを生成
   console.log('🎫 Generating token for user ID:', user.id);
   const token = generateToken(user.id);
+  console.log('Token generated:', token ? 'Yes' : 'No');
 
   // パスワードを除外してレスポンスを返す
-  const { password: _, ...userWithoutPassword } = user;
+  console.log('📦 User object keys:', Object.keys(user));
 
-  console.log('✅ Login successful');
-  res.json({
-    success: true,
-    message: 'ログインに成功しました',
-    data: {
-      user: userWithoutPassword,
-      token,
-    },
-  });
+  const { password: _, ...userWithoutPassword } = user;
+  console.log('📦 User without password keys:', Object.keys(userWithoutPassword));
+
+  console.log('✅ Login successful, sending response...');
+
+  try {
+    res.json({
+      success: true,
+      message: 'ログインに成功しました',
+      data: {
+        user: userWithoutPassword,
+        token,
+      },
+    });
+    console.log('✅ Response sent successfully');
+  } catch (error) {
+    console.error('❌ Error sending response:', error);
+    throw error;
+  }
 });
 
 // 現在のユーザー情報を取得

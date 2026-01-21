@@ -4,6 +4,7 @@ import ConversationList from '../components/Messages/ConversationList';
 import MessageList from '../components/Messages/MessageList';
 import MessageForm from '../components/Messages/MessageForm';
 import UserSelector from '../components/Messages/UserSelector';
+import BroadcastModal from '../components/Messages/BroadcastModal';
 import { useAuth } from '../context/AuthContext';
 
 const MessagesPage = () => {
@@ -12,6 +13,7 @@ const MessagesPage = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUserSelector, setShowUserSelector] = useState(false);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const { isAdmin } = useAuth();
 
   useEffect(() => {
@@ -67,6 +69,11 @@ const MessagesPage = () => {
     }
   };
 
+  const handleBroadcastSuccess = async () => {
+    // 会話一覧を再読み込み
+    await loadConversations();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -76,25 +83,39 @@ const MessagesPage = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="flex-1 flex overflow-hidden">
+    <>
+      <BroadcastModal
+        isOpen={showBroadcastModal}
+        onClose={() => setShowBroadcastModal(false)}
+        onSuccess={handleBroadcastSuccess}
+      />
+      <div className="h-screen flex flex-col">
+        <div className="flex-1 flex overflow-hidden">
         {/* 左サイドバー - 会話リスト */}
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">メッセージ</h2>
             {isAdmin && (
-              <button
-                onClick={() => setShowUserSelector(!showUserSelector)}
-                className="mt-3 w-full btn-primary text-sm"
-              >
-                + 新しいメッセージ
-              </button>
+              <div className="mt-3 space-y-2">
+                <button
+                  onClick={() => setShowUserSelector(!showUserSelector)}
+                  className="w-full btn-primary text-sm"
+                >
+                  + 新しいメッセージ
+                </button>
+                <button
+                  onClick={() => setShowBroadcastModal(true)}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                >
+                  📢 一斉送信
+                </button>
+              </div>
             )}
           </div>
 
           <div className="flex-1 overflow-y-auto">
             {showUserSelector ? (
-              <UserSelector onSelectUser={handleSelectUser} />
+              <UserSelector onSelectUser={handleSelectUser} isOpen={showUserSelector} />
             ) : (
               <ConversationList
                 conversations={conversations}
@@ -128,7 +149,8 @@ const MessagesPage = () => {
           <MessageForm onSend={handleSendMessage} selectedUser={selectedUser} />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

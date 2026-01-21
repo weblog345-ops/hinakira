@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
 import { userAPI } from '../../services/api';
 
-const UserSelector = ({ onSelectUser }) => {
+const UserSelector = ({ onSelectUser, isOpen }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    if (isOpen) {
+      loadUsers();
+    }
+  }, [isOpen]);
 
   const loadUsers = async () => {
+    setLoading(true);
     try {
       const response = await userAPI.getAvailableUsers();
       setUsers(response.data.data.users);

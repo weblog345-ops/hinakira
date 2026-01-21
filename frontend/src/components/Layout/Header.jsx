@@ -39,6 +39,14 @@ const Header = () => {
                 >
                   メッセージ
                 </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => navigate('/users')}
+                    className="text-gray-700 hover:text-primary-500 font-medium transition-colors"
+                  >
+                    ユーザー一覧
+                  </button>
+                )}
                 <button
                   onClick={handleLogout}
                   className="btn-secondary"

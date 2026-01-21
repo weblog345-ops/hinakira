@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Layout/Header';
 import AuthPage from './pages/AuthPage';
 import MessagesPage from './pages/MessagesPage';
+import UsersPage from './pages/UsersPage';
 
 // 認証が必要なルートを保護するコンポーネント
 const ProtectedRoute = ({ children }) => {
@@ -64,6 +65,16 @@ function AppRoutes() {
               <ProtectedRoute>
                 <Header />
                 <MessagesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Header />
+                <UsersPage />
               </ProtectedRoute>
             }
           />

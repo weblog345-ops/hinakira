@@ -5,6 +5,7 @@ import {
   getConversations,
   getUnreadCount,
   markAsRead,
+  broadcastMessage,
 } from '../controllers/messageController.js';
 import { authenticate } from '../middleware/auth.js';
 import { messageValidation, validate } from '../utils/validators.js';
@@ -16,6 +17,9 @@ router.use(authenticate);
 
 // メッセージ送信
 router.post('/', messageValidation, validate, sendMessage);
+
+// 一斉送信（管理者のみ）
+router.post('/broadcast', broadcastMessage);
 
 // 会話一覧を取得
 router.get('/conversations', getConversations);

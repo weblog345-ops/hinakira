@@ -245,3 +245,94 @@ export const markAsRead = catchAsync(async (req, res) => {
     data: { message: updatedMessage },
   });
 });
+
+// 一斉送信（管理者のみ）
+export const broadcastMessage = catchAsync(async (req, res) => {
+  const { content, recipientIds } = req.body;
+  const senderId = req.user.id;
+
+  // 管理者のみが一斉送信可能
+  if (req.user.role !== 'ADMIN') {
+    throw new AppError('一斉送信は管理者のみ利用できます', 403);
+  }
+
+  // recipientIdsが指定されていない場合は全メンバーに送信
+  let recipients;
+  if (!recipientIds || recipientIds.length === 0) {
+    recipients = await prisma.user.findMany({
+      where: {
+        id: { not: senderId }, // 自分自身を除外
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+  } else {
+    recipients = await prisma.user.findMany({
+      where: {
+        id: {
+          in: recipientIds.map(id => parseInt(id)),
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+  }
+
+  if (recipients.length === 0) {
+    throw new AppError('送信先が見つかりません', 404);
+  }
+
+  // 各ユーザーにメッセージを送信
+  const messages = [];
+  for (const recipient of recipients) {
+    const message = await prisma.message.create({
+      data: {
+        content,
+        senderId,
+        receiverId: recipient.id,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    messages.push(message);
+
+    // メール通知を送信（非同期、エラーが発生してもメッセージ送信は成功）
+    sendMessageNotification(message).catch(err => {
+      console.error('メール通知の送信に失敗しました:', err);
+    });
+  }
+
+  res.status(201).json({
+    success: true,
+    message: `${messages.length}人にメッセージを送信しました`,
+    data: {
+      count: messages.length,
+      messages
+    },
+  });
+});

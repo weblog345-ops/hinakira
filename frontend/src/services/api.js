@@ -56,6 +56,7 @@ export const userAPI = {
 // ===== メッセージAPI =====
 export const messageAPI = {
   sendMessage: (data) => api.post('/messages', data),
+  broadcastMessage: (data) => api.post('/messages/broadcast', data),
   getConversation: (userId) => api.get(`/messages/${userId}`),
   getConversations: () => api.get('/messages/conversations'),
   getUnreadCount: () => api.get('/messages/unread-count'),

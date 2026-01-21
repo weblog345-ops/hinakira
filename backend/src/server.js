@@ -15,32 +15,19 @@ import messageRoutes from './routes/messages.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// .envファイルのパスを確認
+// .envファイルを複数のパスから探して読み込む
 const fs = await import('fs');
 const possiblePaths = [
   join(__dirname, '..', '.env'),           // backend/.env
   join(__dirname, '..', '..', '.env'),     // hinakira/.env (project root)
 ];
 
-let loadedPath = null;
-console.log('🔍 Searching for .env file...');
 for (const path of possiblePaths) {
-  console.log('  Trying:', path, '- Exists:', fs.existsSync(path));
   if (fs.existsSync(path)) {
-    const result = dotenv.config({ path });
-    loadedPath = path;
-    console.log('  ✅ Loaded from:', path);
-    if (result.error) {
-      console.error('  ❌ Error loading .env:', result.error);
-    }
+    dotenv.config({ path });
     break;
   }
 }
-
-console.log('🔧 Environment variables loaded from:', loadedPath || 'NONE');
-console.log('  JWT_SECRET:', process.env.JWT_SECRET ? '✅ Set' : '❌ Missing');
-console.log('  PORT:', process.env.PORT || 3000);
-console.log('  NODE_ENV:', process.env.NODE_ENV || 'development');
 
 const app = express();
 const PORT = process.env.PORT || 3000;

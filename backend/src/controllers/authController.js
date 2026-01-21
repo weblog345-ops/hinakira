@@ -5,23 +5,11 @@ import { AppError, catchAsync } from '../utils/errorHandler.js';
 
 // JWTトークンを生成
 const generateToken = (userId) => {
-  try {
-    console.log('  🔑 generateToken called with userId:', userId);
-    console.log('  🔑 JWT_SECRET:', process.env.JWT_SECRET ? 'exists' : 'missing');
-    console.log('  🔑 JWT_EXPIRES_IN:', process.env.JWT_EXPIRES_IN);
-
-    const token = jwt.sign(
-      { id: userId },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    console.log('  🔑 Token created successfully');
-    return token;
-  } catch (error) {
-    console.error('  ❌ Error in generateToken:', error);
-    throw error;
-  }
+  return jwt.sign(
+    { id: userId },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
 };
 
 // ユーザー登録
@@ -72,73 +60,38 @@ export const register = catchAsync(async (req, res) => {
 
 // ログイン
 export const login = catchAsync(async (req, res) => {
-  console.log('🔵 Login request received:', { email: req.body.email });
-
   const { email, password } = req.body;
 
   // ユーザーを検索（パスワードも含めて取得）
-  console.log('🔍 Searching for user:', email);
   const user = await prisma.user.findUnique({
     where: { email },
   });
 
-  console.log('👤 User found:', user ? 'Yes' : 'No');
-
   if (!user) {
-    console.log('❌ User not found');
     throw new AppError('メールアドレスまたはパスワードが正しくありません', 401);
   }
 
   // パスワードを検証
-  console.log('🔐 Verifying password...');
-  console.log('Input password:', password);
-  console.log('Stored hash:', user.password);
-
   const isPasswordValid = await bcrypt.compare(password, user.password);
-  console.log('Password valid:', isPasswordValid);
 
   if (!isPasswordValid) {
-    console.log('❌ Password invalid');
     throw new AppError('メールアドレスまたはパスワードが正しくありません', 401);
   }
 
   // JWTトークンを生成
-  console.log('🎫 Generating token for user ID:', user.id);
-  console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
-  console.log('JWT_SECRET length:', process.env.JWT_SECRET?.length);
-
-  let token;
-  try {
-    token = generateToken(user.id);
-    console.log('Token generated:', token ? 'Yes' : 'No');
-    console.log('Token:', token);
-  } catch (error) {
-    console.error('❌ Error generating token:', error);
-    throw error;
-  }
+  const token = generateToken(user.id);
 
   // パスワードを除外してレスポンスを返す
-  console.log('📦 User object keys:', Object.keys(user));
-
   const { password: _, ...userWithoutPassword } = user;
-  console.log('📦 User without password keys:', Object.keys(userWithoutPassword));
 
-  console.log('✅ Login successful, sending response...');
-
-  try {
-    res.json({
-      success: true,
-      message: 'ログインに成功しました',
-      data: {
-        user: userWithoutPassword,
-        token,
-      },
-    });
-    console.log('✅ Response sent successfully');
-  } catch (error) {
-    console.error('❌ Error sending response:', error);
-    throw error;
-  }
+  res.json({
+    success: true,
+    message: 'ログインに成功しました',
+    data: {
+      user: userWithoutPassword,
+      token,
+    },
+  });
 });
 
 // 現在のユーザー情報を取得

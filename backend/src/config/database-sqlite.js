@@ -147,10 +147,19 @@ const prisma = {
             if (condition.senderId !== undefined && condition.receiverId !== undefined) {
               parts.push('(senderId = ? AND receiverId = ?)');
               params.push(condition.senderId, condition.receiverId);
+            } else if (condition.senderId !== undefined) {
+              parts.push('senderId = ?');
+              params.push(condition.senderId);
+            } else if (condition.receiverId !== undefined) {
+              parts.push('receiverId = ?');
+              params.push(condition.receiverId);
             }
             return parts.join(' AND ');
-          });
-          conditions.push('(' + orConditions.join(' OR ') + ')');
+          }).filter(cond => cond !== '');
+
+          if (orConditions.length > 0) {
+            conditions.push('(' + orConditions.join(' OR ') + ')');
+          }
         } else {
           if (where.senderId !== undefined) {
             conditions.push('senderId = ?');

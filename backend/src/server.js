@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { errorHandler } from './utils/errorHandler.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 // ルートのインポート
 import authRoutes from './routes/auth.js';
@@ -10,7 +12,14 @@ import userRoutes from './routes/users.js';
 import messageRoutes from './routes/messages.js';
 
 // 環境変数の読み込み
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '..', '.env') });
+
+console.log('🔧 Environment variables loaded:');
+console.log('  JWT_SECRET:', process.env.JWT_SECRET ? '✅ Set' : '❌ Missing');
+console.log('  PORT:', process.env.PORT || 3000);
+console.log('  NODE_ENV:', process.env.NODE_ENV || 'development');
 
 const app = express();
 const PORT = process.env.PORT || 3000;

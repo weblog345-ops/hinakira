@@ -91,89 +91,75 @@ const MessageList = ({ messages, selectedUser }) => {
               return (
                 <div
                   key={message.id}
-                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                  className={`flex flex-col space-y-2 ${isOwnMessage ? 'items-end' : 'items-start'}`}
                 >
-                  <div
-                    className={`max-w-xs lg:max-w-md rounded-lg ${
-                      isOwnMessage
-                        ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white'
-                        : 'bg-white text-gray-900 shadow'
-                    }`}
-                  >
-                    {/* メッセージテキスト */}
-                    {message.content && (
-                      <div className="px-4 py-2">
-                        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                      </div>
-                    )}
+                  {/* メッセージテキスト */}
+                  {message.content && (
+                    <div
+                      className={`max-w-xs lg:max-w-md rounded-lg px-4 py-2 ${
+                        isOwnMessage
+                          ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white'
+                          : 'bg-white text-gray-900 shadow'
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    </div>
+                  )}
 
-                    {/* 添付ファイル */}
-                    {attachments.length > 0 && (
-                      <div className="px-2 pb-2 space-y-2">
-                        {attachments.map((attachment, index) => (
-                          <div key={index}>
-                            {isImage(attachment.mimetype) ? (
-                              // 画像の場合
+                  {/* 添付ファイル */}
+                  {attachments.length > 0 && (
+                    <div className="space-y-2 max-w-xs lg:max-w-md">
+                      {attachments.map((attachment, index) => (
+                        <div key={index}>
+                          {isImage(attachment.mimetype) ? (
+                            // 画像の場合
+                            <div className="rounded-lg overflow-hidden shadow-md">
                               <img
                                 src={`${baseURL}${attachment.path}`}
                                 alt={attachment.originalName}
-                                className="max-w-full rounded cursor-pointer hover:opacity-90 transition-opacity"
+                                className="max-w-full cursor-pointer hover:opacity-90 transition-opacity"
                                 onClick={() => setLightboxImage(`${baseURL}${attachment.path}`)}
                               />
-                            ) : (
-                              // その他のファイルの場合
-                              <a
-                                href={`${baseURL}${attachment.path}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`flex items-center space-x-2 p-2 rounded ${
-                                  isOwnMessage
-                                    ? 'bg-white/20 hover:bg-white/30'
-                                    : 'bg-gray-100 hover:bg-gray-200'
-                                } transition-colors`}
-                              >
-                                <span className="text-2xl">{getFileIcon(attachment.mimetype)}</span>
-                                <div className="flex-1 min-w-0">
-                                  <p
-                                    className={`text-sm truncate ${
-                                      isOwnMessage ? 'text-white' : 'text-gray-700'
-                                    }`}
-                                  >
-                                    {attachment.originalName}
-                                  </p>
-                                  <p
-                                    className={`text-xs ${
-                                      isOwnMessage ? 'text-white/70' : 'text-gray-500'
-                                    }`}
-                                  >
-                                    {(attachment.size / 1024).toFixed(1)} KB
-                                  </p>
-                                </div>
-                                <span className={isOwnMessage ? 'text-white' : 'text-gray-500'}>
-                                  ↓
-                                </span>
-                              </a>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* タイムスタンプ */}
-                    <div className="px-4 pb-2">
-                      <p
-                        className={`text-xs ${
-                          isOwnMessage ? 'text-white/70' : 'text-gray-500'
-                        }`}
-                      >
-                        {new Date(message.createdAt).toLocaleString('ja-JP', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
+                            </div>
+                          ) : (
+                            // その他のファイルの場合
+                            <a
+                              href={`${baseURL}${attachment.path}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center space-x-2 p-3 rounded-lg ${
+                                isOwnMessage
+                                  ? 'bg-primary-100 hover:bg-primary-200'
+                                  : 'bg-white hover:bg-gray-50'
+                              } shadow transition-colors`}
+                            >
+                              <span className="text-2xl">{getFileIcon(attachment.mimetype)}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm truncate text-gray-900">
+                                  {attachment.originalName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {(attachment.size / 1024).toFixed(1)} KB
+                                </p>
+                              </div>
+                              <span className="text-gray-500">↓</span>
+                            </a>
+                          )}
+                        </div>
+                      ))}
                     </div>
+                  )}
+
+                  {/* タイムスタンプ */}
+                  <div className="px-2">
+                    <p className="text-xs text-gray-500">
+                      {new Date(message.createdAt).toLocaleString('ja-JP', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
                   </div>
                 </div>
               );

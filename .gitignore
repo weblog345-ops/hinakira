@@ -9,8 +9,8 @@ yarn.lock
 .env.production
 
 # Database
-backend/*.db
-backend/*.db-journal
+*.db
+*.db-journal
 backend/prisma/migrations/
 
 # Build outputs

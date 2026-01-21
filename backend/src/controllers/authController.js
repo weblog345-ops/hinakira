@@ -5,11 +5,23 @@ import { AppError, catchAsync } from '../utils/errorHandler.js';
 
 // JWTトークンを生成
 const generateToken = (userId) => {
-  return jwt.sign(
-    { id: userId },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-  );
+  try {
+    console.log('  🔑 generateToken called with userId:', userId);
+    console.log('  🔑 JWT_SECRET:', process.env.JWT_SECRET ? 'exists' : 'missing');
+    console.log('  🔑 JWT_EXPIRES_IN:', process.env.JWT_EXPIRES_IN);
+
+    const token = jwt.sign(
+      { id: userId },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    console.log('  🔑 Token created successfully');
+    return token;
+  } catch (error) {
+    console.error('  ❌ Error in generateToken:', error);
+    throw error;
+  }
 };
 
 // ユーザー登録
@@ -92,8 +104,18 @@ export const login = catchAsync(async (req, res) => {
 
   // JWTトークンを生成
   console.log('🎫 Generating token for user ID:', user.id);
-  const token = generateToken(user.id);
-  console.log('Token generated:', token ? 'Yes' : 'No');
+  console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+  console.log('JWT_SECRET length:', process.env.JWT_SECRET?.length);
+
+  let token;
+  try {
+    token = generateToken(user.id);
+    console.log('Token generated:', token ? 'Yes' : 'No');
+    console.log('Token:', token);
+  } catch (error) {
+    console.error('❌ Error generating token:', error);
+    throw error;
+  }
 
   // パスワードを除外してレスポンスを返す
   console.log('📦 User object keys:', Object.keys(user));

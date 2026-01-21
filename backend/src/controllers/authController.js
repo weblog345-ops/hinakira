@@ -60,30 +60,44 @@ export const register = catchAsync(async (req, res) => {
 
 // ログイン
 export const login = catchAsync(async (req, res) => {
+  console.log('🔵 Login request received:', { email: req.body.email });
+
   const { email, password } = req.body;
 
   // ユーザーを検索（パスワードも含めて取得）
+  console.log('🔍 Searching for user:', email);
   const user = await prisma.user.findUnique({
     where: { email },
   });
 
+  console.log('👤 User found:', user ? 'Yes' : 'No');
+
   if (!user) {
+    console.log('❌ User not found');
     throw new AppError('メールアドレスまたはパスワードが正しくありません', 401);
   }
 
   // パスワードを検証
+  console.log('🔐 Verifying password...');
+  console.log('Input password:', password);
+  console.log('Stored hash:', user.password);
+
   const isPasswordValid = await bcrypt.compare(password, user.password);
+  console.log('Password valid:', isPasswordValid);
 
   if (!isPasswordValid) {
+    console.log('❌ Password invalid');
     throw new AppError('メールアドレスまたはパスワードが正しくありません', 401);
   }
 
   // JWTトークンを生成
+  console.log('🎫 Generating token for user ID:', user.id);
   const token = generateToken(user.id);
 
   // パスワードを除外してレスポンスを返す
   const { password: _, ...userWithoutPassword } = user;
 
+  console.log('✅ Login successful');
   res.json({
     success: true,
     message: 'ログインに成功しました',

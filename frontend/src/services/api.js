@@ -55,7 +55,17 @@ export const userAPI = {
 
 // ===== メッセージAPI =====
 export const messageAPI = {
-  sendMessage: (data) => api.post('/messages', data),
+  sendMessage: (data) => {
+    // FormDataの場合はContent-Typeを指定しない（自動設定）
+    if (data instanceof FormData) {
+      return api.post('/messages', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
+    return api.post('/messages', data);
+  },
   broadcastMessage: (data) => api.post('/messages/broadcast', data),
   getConversation: (userId) => api.get(`/messages/${userId}`),
   getConversations: () => api.get('/messages/conversations'),

@@ -51,14 +51,12 @@ const MessagesPage = () => {
     setShowUserSelector(false);
   };
 
-  const handleSendMessage = async (content) => {
+  const handleSendMessage = async (formDataOrContent) => {
     if (!selectedUser) return;
 
     try {
-      await messageAPI.sendMessage({
-        receiverId: selectedUser.id,
-        content,
-      });
+      // FormDataか通常のオブジェクトかを判断
+      await messageAPI.sendMessage(formDataOrContent);
 
       // メッセージを再読み込み
       await loadMessages(selectedUser.id);

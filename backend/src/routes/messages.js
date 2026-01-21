@@ -9,14 +9,15 @@ import {
 } from '../controllers/messageController.js';
 import { authenticate } from '../middleware/auth.js';
 import { messageValidation, validate } from '../utils/validators.js';
+import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
 // 全ルートで認証が必要
 router.use(authenticate);
 
-// メッセージ送信
-router.post('/', messageValidation, validate, sendMessage);
+// メッセージ送信（ファイル添付対応）
+router.post('/', upload.array('attachments', 5), messageValidation, validate, sendMessage);
 
 // 一斉送信（管理者のみ）
 router.post('/broadcast', broadcastMessage);

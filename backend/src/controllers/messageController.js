@@ -7,6 +7,15 @@ export const sendMessage = catchAsync(async (req, res) => {
   const { receiverId, content } = req.body;
   const senderId = req.user.id;
 
+  // 添付ファイル情報を取得
+  const attachments = req.files ? req.files.map(file => ({
+    filename: file.filename,
+    originalName: file.originalname,
+    mimetype: file.mimetype,
+    size: file.size,
+    path: `/uploads/${file.filename}`,
+  })) : [];
+
   // 受信者が存在するか確認
   const receiver = await prisma.user.findUnique({
     where: { id: receiverId },
@@ -32,6 +41,7 @@ export const sendMessage = catchAsync(async (req, res) => {
       content,
       senderId,
       receiverId,
+      attachments: attachments.length > 0 ? JSON.stringify(attachments) : null,
     },
     include: {
       sender: {
@@ -52,6 +62,11 @@ export const sendMessage = catchAsync(async (req, res) => {
       },
     },
   });
+
+  // attachmentsをJSONからオブジェクトに変換
+  if (message.attachments) {
+    message.attachments = JSON.parse(message.attachments);
+  }
 
   // メール通知を送信（非同期、エラーが発生してもメッセージ送信は成功）
   sendMessageNotification(message).catch(err => {
@@ -114,6 +129,17 @@ export const getConversation = catchAsync(async (req, res) => {
     },
   });
 
+  // attachmentsをJSONからオブジェクトに変換
+  messages.forEach(msg => {
+    if (msg.attachments && typeof msg.attachments === 'string') {
+      try {
+        msg.attachments = JSON.parse(msg.attachments);
+      } catch (e) {
+        msg.attachments = null;
+      }
+    }
+  });
+
   // 受信した未読メッセージを既読にする
   await prisma.message.updateMany({
     where: {
@@ -165,6 +191,17 @@ export const getConversations = catchAsync(async (req, res) => {
     orderBy: {
       createdAt: 'desc',
     },
+  });
+
+  // attachmentsをJSONからオブジェクトに変換
+  messages.forEach(msg => {
+    if (msg.attachments && typeof msg.attachments === 'string') {
+      try {
+        msg.attachments = JSON.parse(msg.attachments);
+      } catch (e) {
+        msg.attachments = null;
+      }
+    }
   });
 
   // 会話相手をマップで管理（最新のメッセージを保持）

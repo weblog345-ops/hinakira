@@ -13,6 +13,9 @@ yarn.lock
 *.db-journal
 backend/prisma/migrations/
 
+# Uploads
+backend/uploads/
+
 # Build outputs
 frontend/dist/
 frontend/build/
